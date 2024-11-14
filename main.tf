@@ -83,11 +83,21 @@ module "userdata" {
   version     = "1.12.4"
   environment = var.environment
   role        = "infrahouse_github_backup"
-  custom_facts = {
-    "infrahouse-github-backup" : {
-      "app-key-url" : "secretsmanager://${data.aws_secretsmanager_secret.app_key_secret.name}"
-    }
-  }
+  custom_facts = merge(
+    {
+      "infrahouse-github-backup" : {
+        "app-key-url" : "secretsmanager://${data.aws_secretsmanager_secret.app_key_secret.name}"
+      }
+    },
+    var.puppet_custom_facts
+  )
+  puppet_debug_logging     = var.puppet_debug_logging
+  puppet_environmentpath   = var.puppet_environmentpath
+  puppet_hiera_config_path = var.puppet_hiera_config_path
+  puppet_module_path       = var.puppet_module_path
+  puppet_root_directory    = var.puppet_root_directory
+  puppet_manifest          = var.puppet_manifest
+  packages                 = var.packages
 }
 
 resource "random_string" "profile_suffix" {
