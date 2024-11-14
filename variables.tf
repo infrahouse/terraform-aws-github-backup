@@ -67,6 +67,50 @@ variable "max_instance_lifetime_days" {
   default     = 30
 }
 
+variable "packages" {
+  description = "List of packages to install when the instances bootstraps."
+  type        = list(string)
+  default     = []
+}
+
+variable "puppet_custom_facts" {
+  description = "A map of custom puppet facts"
+  type        = any
+  default     = {}
+}
+
+variable "puppet_debug_logging" {
+  description = "Enable debug logging if true."
+  type        = bool
+  default     = false
+}
+
+variable "puppet_environmentpath" {
+  description = "A path for directory environments."
+  default     = "{root_directory}/environments"
+}
+
+variable "puppet_hiera_config_path" {
+  description = "Path to hiera configuration file."
+  default     = "{root_directory}/environments/{environment}/hiera.yaml"
+}
+
+variable "puppet_manifest" {
+  description = "Path to puppet manifest. By default ih-puppet will apply {root_directory}/environments/{environment}/manifests/site.pp."
+  type        = string
+  default     = null
+}
+
+variable "puppet_module_path" {
+  description = "Path to common puppet modules."
+  default     = "{root_directory}/environments/{environment}/modules:{root_directory}/modules"
+}
+
+variable "puppet_root_directory" {
+  description = "Path where the puppet code is hosted."
+  default     = "/opt/puppet-code"
+}
+
 variable "root_volume_size" {
   description = "Root volume size in EC2 instance in Gigabytes"
   type        = number
