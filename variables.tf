@@ -122,6 +122,12 @@ variable "service_name" {
   default     = "infrahouse-github-backup"
 }
 
+variable "smtp_credentials_secret" {
+  description = "AWS secret name with SMTP credentials. The secret must contain a JSON with user and password keys."
+  type        = string
+  default     = null
+}
+
 variable "tags" {
   description = "Tags to apply to instances in the autoscaling group."
   type        = map(string)

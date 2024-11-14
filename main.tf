@@ -89,6 +89,11 @@ module "userdata" {
         "app-key-url" : "secretsmanager://${data.aws_secretsmanager_secret.app_key_secret.name}"
       }
     },
+    var.smtp_credentials_secret != null ? {
+      postfix : {
+        smtp_credentials : var.smtp_credentials_secret
+      }
+    } : {},
     var.puppet_custom_facts
   )
   puppet_debug_logging     = var.puppet_debug_logging
