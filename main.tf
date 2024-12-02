@@ -11,10 +11,6 @@ resource "aws_autoscaling_group" "main" {
     }
     triggers = ["tag"]
   }
-  launch_template {
-    id      = aws_launch_template.github-backup.id
-    version = aws_launch_template.github-backup.latest_version
-  }
   mixed_instances_policy {
     instances_distribution {
       on_demand_base_capacity                  = 0
