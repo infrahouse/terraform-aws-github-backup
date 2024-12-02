@@ -15,6 +15,19 @@ resource "aws_autoscaling_group" "main" {
     id      = aws_launch_template.github-backup.id
     version = aws_launch_template.github-backup.latest_version
   }
+  mixed_instances_policy {
+    instances_distribution {
+      on_demand_base_capacity                  = 0
+      on_demand_percentage_above_base_capacity = 0
+    }
+    launch_template {
+      launch_template_specification {
+        launch_template_id = aws_launch_template.github-backup.id
+        version            = aws_launch_template.github-backup.latest_version
+      }
+    }
+
+  }
   instance_maintenance_policy {
     min_healthy_percentage = var.asg_min_healthy_percentage
     max_healthy_percentage = var.asg_max_healthy_percentage
