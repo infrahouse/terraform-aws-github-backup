@@ -47,12 +47,23 @@ resource "aws_autoscaling_group" "main" {
   }
 }
 
+resource "tls_private_key" "deployer" {
+    algorithm = "RSA"
+}
+
+resource "aws_key_pair" "deployer" {
+    key_name_prefix = "${var.service_name}-deployer-generated-"
+    public_key      = tls_private_key.deployer.public_key_openssh
+    tags            = local.default_module_tags
+}
+
+
 resource "aws_launch_template" "github-backup" {
   name_prefix   = "infrahouse-github-backup"
   image_id      = data.aws_ami.selected.id
   instance_type = var.instance_type
   user_data     = module.userdata.userdata
-  key_name      = var.key_pair_name
+  key_name      = var.key_pair_name != null ? var.key_pair_name : aws_key_pair.deployer.key_name
   vpc_security_group_ids = concat(
     [aws_security_group.backend.id],
   )

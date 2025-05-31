@@ -1,4 +1,6 @@
 locals {
+  module_version = "0.5.2"
+
   default_module_tags = {
     environment : var.environment
     service : var.service_name
@@ -8,6 +10,7 @@ locals {
   default_asg_tags = merge(
     {
       Name : "infrahouse-github-backup"
+      module_version : local.module_version
     },
     local.default_module_tags
   )

@@ -58,6 +58,16 @@ data "aws_iam_policy_document" "default_permissions" {
       data.aws_secretsmanager_secret.app_key_secret.arn
     ]
   }
+  # Allow reading tags by ih-ec2 tags
+  # The "ec2:DescribeInstances" action doesn't support Conditions, so we have to use the wildcard
+  statement {
+    actions = [
+      "ec2:DescribeInstances",
+    ]
+    resources = [
+      "*"
+    ]
+  }
 }
 
 data "aws_secretsmanager_secret" "app_key_secret" {

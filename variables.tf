@@ -59,6 +59,7 @@ variable "instance_type" {
 variable "key_pair_name" {
   description = "SSH keypair name to be deployed in EC2 instances"
   type        = string
+  default     = null
 }
 
 variable "max_instance_lifetime_days" {
