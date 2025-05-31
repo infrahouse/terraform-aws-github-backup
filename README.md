@@ -21,7 +21,7 @@ module.
 ```hcl
 module "terraform-aws-github-backup" {
   source  = "registry.infrahouse.com/infrahouse/github-backup/aws"
-  version = "0.5.2"
+  version = "0.6.0"
 
   app_key_secret           = module.infrahouse-github-backup-app-key.secret_name
   subnets                  = module.management.subnet_private_ids
