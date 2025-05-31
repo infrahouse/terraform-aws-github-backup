@@ -48,13 +48,13 @@ resource "aws_autoscaling_group" "main" {
 }
 
 resource "tls_private_key" "deployer" {
-    algorithm = "RSA"
+  algorithm = "RSA"
 }
 
 resource "aws_key_pair" "deployer" {
-    key_name_prefix = "${var.service_name}-deployer-generated-"
-    public_key      = tls_private_key.deployer.public_key_openssh
-    tags            = local.default_module_tags
+  key_name_prefix = "${var.service_name}-deployer-generated-"
+  public_key      = tls_private_key.deployer.public_key_openssh
+  tags            = local.default_module_tags
 }
 
 
@@ -79,7 +79,8 @@ resource "aws_launch_template" "github-backup" {
     }
   }
   metadata_options {
-    http_tokens = "required"
+    http_tokens            = "required"
+    instance_metadata_tags = "enabled"
   }
   tag_specifications {
     resource_type = "volume"
