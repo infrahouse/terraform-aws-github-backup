@@ -1,5 +1,36 @@
 # terraform-aws-github-backup
-TBD
+
+This module automates the deployment of infrastructure for
+the [InfraHouse GitHub Backup](https://github.com/apps/infrahouse-github-backup) application,
+which is designed to back up GitHub repositories.
+
+The instances within the Auto Scaling Group perform the following tasks:
+- Read app installations and their configurations.
+- Create an in-memory backup copy of the repositories.
+- Upload the backups to an S3 bucket specified in the installation configuration.
+
+**Note:** The backup of a repository is stored on an ephemeral disk,
+meaning it is not retained after the instance is terminated. This design choice enhances safety and security.
+
+On the client side, the backups are configured by
+the [github-backup-configuration](https://github.com/infrahouse/terraform-aws-github-backup-configuration)
+module.
+
+## Usage
+
+```hcl
+module "terraform-aws-github-backup" {
+  source  = "registry.infrahouse.com/infrahouse/github-backup/aws"
+  version = "0.5.2"
+
+  app_key_secret           = module.infrahouse-github-backup-app-key.secret_name
+  subnets                  = module.management.subnet_private_ids
+  instance_type            = "t3a.small"
+  environment              = var.environment
+  root_volume_size         = 60
+  smtp_credentials_secret = module.smtp_credentials.secret_name
+}
+```
 ## Requirements
 
 | Name | Version |
