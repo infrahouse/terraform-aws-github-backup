@@ -14,17 +14,17 @@ data "aws_ami" "selected" {
   filter {
     name = "image-id"
     values = [
-      var.ami == null ? data.aws_ami.ubuntu_22.id : var.ami
+      var.ami == null ? data.aws_ami.ubuntu_pro.id : var.ami
     ]
   }
 }
 
-data "aws_ami" "ubuntu_22" {
+data "aws_ami" "ubuntu_pro" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-*"]
+    values = [local.ami_name_pattern_pro]
   }
 
   filter {
@@ -35,6 +35,13 @@ data "aws_ami" "ubuntu_22" {
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
+  }
+
+  filter {
+    name = "state"
+    values = [
+      "available"
+    ]
   }
 
   owners = ["099720109477"] # Canonical
