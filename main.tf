@@ -101,7 +101,7 @@ resource "aws_launch_template" "github-backup" {
 
 module "userdata" {
   source      = "registry.infrahouse.com/infrahouse/cloud-init/aws"
-  version     = "1.12.4"
+  version     = "1.18.0"
   environment = var.environment
   role        = "infrahouse_github_backup"
   custom_facts = merge(
