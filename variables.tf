@@ -136,3 +136,8 @@ variable "tags" {
     Name : "infrahouse-github-backup"
   }
 }
+
+variable "ubuntu_codename" {
+  description = "Ubuntu version codename for the backup runner"
+  default     = "noble"
+}
