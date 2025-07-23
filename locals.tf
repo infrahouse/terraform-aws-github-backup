@@ -1,5 +1,5 @@
 locals {
-  module_version = "0.7.1"
+  module_version = "0.7.2"
 
   default_module_tags = {
     environment : var.environment
