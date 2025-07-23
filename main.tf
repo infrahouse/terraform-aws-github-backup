@@ -124,6 +124,7 @@ module "userdata" {
   puppet_root_directory    = var.puppet_root_directory
   puppet_manifest          = var.puppet_manifest
   packages                 = var.packages
+  ubuntu_codename          = var.ubuntu_codename
 }
 
 resource "random_string" "profile_suffix" {
