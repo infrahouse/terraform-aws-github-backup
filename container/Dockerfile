@@ -11,4 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backup.py .
 
+RUN useradd --create-home appuser
+USER appuser
+
 ENTRYPOINT ["python", "backup.py"]

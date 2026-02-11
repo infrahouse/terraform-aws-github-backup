@@ -146,6 +146,7 @@ resource "aws_s3_bucket_replication_configuration" "backup" {
   rule {
     id     = "replicate-backups"
     status = "Enabled"
+    filter {}
 
     destination {
       bucket        = aws_s3_bucket.replica.arn

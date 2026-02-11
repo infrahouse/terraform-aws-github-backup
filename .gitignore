@@ -26,3 +26,4 @@ terraform.tfvars
 /.claude/*.local.json
 pytest-*-output.log
 /.claude/reviews/
+NUL

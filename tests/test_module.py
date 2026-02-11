@@ -38,7 +38,7 @@ def test_module(
     4. Wait for task completion.
     5. Verify backup bundles exist in the S3 bucket.
     """
-    subnet_public_ids = service_network["subnet_public_ids"]["value"]
+    subnet_private_ids = service_network["subnet_private_ids"]["value"]
 
     terraform_module_dir = osp.join(TERRAFORM_ROOT_DIR, "main")
     with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
@@ -46,7 +46,7 @@ def test_module(
             dedent(
                 f"""
                 region                         = "{aws_region}"
-                subnets                        = {json.dumps(subnet_public_ids)}
+                subnets                        = {json.dumps(subnet_private_ids)}
                 github_app_id                  = "{GH_APP_ID}"
                 github_app_installation_id     = "{GH_APP_INSTALLATION_ID}"
                 """
@@ -160,9 +160,8 @@ def test_module(
             count=1,
             networkConfiguration={
                 "awsvpcConfiguration": {
-                    "subnets": subnet_public_ids,
+                    "subnets": subnet_private_ids,
                     "securityGroups": [security_group_id],
-                    "assignPublicIp": "ENABLED",
                 }
             },
         )
@@ -248,7 +247,3 @@ def test_module(
         assert (
             manifest["success_count"] > 0
         ), "Expected at least one successful backup in manifest"
-        assert manifest["failure_count"] == 0, (
-            f"Backup had {manifest['failure_count']} failures: "
-            f"{manifest.get('failed', [])}"
-        )

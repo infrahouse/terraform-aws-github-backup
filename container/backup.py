@@ -16,7 +16,6 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 import time
 from datetime import datetime, timezone
@@ -45,6 +44,30 @@ TOKEN_REFRESH_THRESHOLD_SECONDS = 300
 # ── AWS helpers ─────────────────────────────────────────────────
 
 
+class _UploadProgress:
+    """Callback for boto3 upload_file() to log progress on large uploads."""
+
+    def __init__(self, filepath: str):
+        self._filepath = filepath
+        self._size = os.path.getsize(filepath)
+        self._seen = 0
+
+    def __call__(self, bytes_transferred: int) -> None:
+        self._seen += bytes_transferred
+        pct = (self._seen / self._size) * 100 if self._size else 100
+        LOG.info(
+            "Upload progress: %s — %.1f%% (%d / %d bytes)",
+            self._filepath,
+            pct,
+            self._seen,
+            self._size,
+        )
+
+
+# Log upload progress for files larger than 100 MiB
+_PROGRESS_LOG_THRESHOLD = 100 * 1024 * 1024
+
+
 def upload_to_s3(
     local_path: str,
     bucket: str,
@@ -53,13 +76,26 @@ def upload_to_s3(
     """
     Upload a local file to S3.
 
+    For files larger than 100 MiB, logs upload progress via
+    a boto3 transfer callback.
+
     :param local_path: Path to the local file.
     :param bucket: S3 bucket name.
     :param s3_key: S3 object key.
     """
+    file_size = os.path.getsize(local_path)
+    LOG.info(
+        "Uploading %s (%d bytes) -> s3://%s/%s",
+        local_path,
+        file_size,
+        bucket,
+        s3_key,
+    )
     client = boto3.client("s3")
-    LOG.info("Uploading %s -> s3://%s/%s", local_path, bucket, s3_key)
-    client.upload_file(local_path, bucket, s3_key)
+    callback = (
+        _UploadProgress(local_path) if file_size >= _PROGRESS_LOG_THRESHOLD else None
+    )
+    client.upload_file(local_path, bucket, s3_key, Callback=callback)
 
 
 def publish_metrics(success_count: int, failure_count: int) -> None:
@@ -255,6 +291,15 @@ def clone_mirror(
     # Write a temporary GIT_ASKPASS script that provides the token.
     # Git calls this script with a prompt like "Username for ..." or
     # "Password for ..."; we return the appropriate credential.
+    #
+    # Why GIT_ASKPASS over alternatives:
+    #  - Environment variables are visible via /proc/<pid>/environ.
+    #  - Embedding the token in the clone URL leaks it in logs and
+    #    error messages.
+    #  - GIT_ASKPASS keeps the token out of the process table and
+    #    git's own output.  The file is short-lived and cleaned up
+    #    in the finally block; Fargate's ephemeral storage provides
+    #    an additional safety net.
     askpass_path = os.path.join(dest_dir, "git-askpass.sh")
     with open(askpass_path, "w") as fp:
         fp.write("#!/bin/sh\n")
@@ -311,7 +356,10 @@ def main() -> None:
     2. List all accessible repositories.
     3. Clone, bundle, and upload each repo to S3.
     4. Write a manifest and publish metrics.
-    5. Exit with code 1 if any repo failed.
+
+    Any exception crashes the process.  The "task not running"
+    CloudWatch alarm (treat_missing_data = "breaching") fires
+    when no BackupSuccess metric is published.
     """
     LOG.info("Starting GitHub backup")
 
@@ -325,7 +373,10 @@ def main() -> None:
     repos = list_repositories(token_mgr.token)
 
     # 4. Back up each repo
-    results: Dict[str, List[Any]] = {"success": [], "failed": []}
+    # Any exception aborts the run — no metrics are published,
+    # which triggers the "task not running" CloudWatch alarm
+    # (treat_missing_data = "breaching").
+    results: List[Dict[str, Any]] = []
     date_prefix = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     for repo in repos:
@@ -349,7 +400,7 @@ def main() -> None:
             upload_to_s3(bundle_path, S3_BUCKET, s3_key)
 
             bundle_size = os.path.getsize(bundle_path)
-            results["success"].append(
+            results.append(
                 {
                     "repo": full_name,
                     "size_bytes": bundle_size,
@@ -357,15 +408,6 @@ def main() -> None:
                 }
             )
             LOG.info("Backed up %s (%d bytes)", full_name, bundle_size)
-
-        except subprocess.CalledProcessError as exc:
-            error_msg = exc.stderr.decode("utf-8", errors="replace")
-            results["failed"].append({"repo": full_name, "error": error_msg})
-            LOG.error("Failed to back up %s: %s", full_name, error_msg)
-
-        except requests.RequestException as exc:
-            results["failed"].append({"repo": full_name, "error": str(exc)})
-            LOG.error("Failed to back up %s: %s", full_name, exc)
 
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -375,10 +417,8 @@ def main() -> None:
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "date": date_prefix,
         "total_repos": len(repos),
-        "success_count": len(results["success"]),
-        "failure_count": len(results["failed"]),
-        "success": results["success"],
-        "failed": results["failed"],
+        "success_count": len(results),
+        "repos": results,
     }
     manifest_tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
     try:
@@ -393,23 +433,10 @@ def main() -> None:
         os.unlink(manifest_tmp.name)
 
     # 6. Publish CloudWatch metrics
-    publish_metrics(
-        len(results["success"]),
-        len(results["failed"]),
-    )
+    publish_metrics(len(results), 0)
 
     # 7. Report
-    LOG.info(
-        "Backup complete: %d succeeded, %d failed",
-        len(results["success"]),
-        len(results["failed"]),
-    )
-
-    if results["failed"]:
-        LOG.error("Failed repos:")
-        for failure in results["failed"]:
-            LOG.error("  %s: %s", failure["repo"], failure["error"])
-        sys.exit(1)
+    LOG.info("Backup complete: %d repos backed up", len(results))
 
 
 if __name__ == "__main__":

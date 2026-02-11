@@ -50,7 +50,6 @@ data "aws_iam_policy_document" "task_permissions" {
   statement {
     actions = [
       "s3:PutObject",
-      "s3:PutObjectAcl",
       "s3:ListBucket",
       "s3:GetBucketLocation",
     ]

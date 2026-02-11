@@ -63,7 +63,7 @@ resource "aws_cloudwatch_event_target" "backup" {
     network_configuration {
       subnets          = var.subnets
       security_groups  = [aws_security_group.backup.id]
-      assign_public_ip = false
+      assign_public_ip = data.aws_subnet.selected.map_public_ip_on_launch
     }
   }
 }
