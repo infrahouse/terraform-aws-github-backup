@@ -1,143 +1,159 @@
-variable "ami" {
-  description = "Image for EC2 instances"
-  type        = string
-  default     = null
-}
+# ── Required ─────────────────────────────────────────────────────
 
-variable "app_key_secret" {
-  description = "secret name where the GitHub PEM is stored."
+variable "github_app_id" {
+  description = "The GitHub App ID. Found in the App's settings page."
   type        = string
 }
-variable "asg_min_size" {
-  description = "Minimum number of instances in ASG"
-  type        = number
-  default     = 1
+
+variable "github_app_installation_id" {
+  description = <<-EOT
+    The installation ID of the GitHub App on
+    the target organization.
+  EOT
+  type        = string
 }
 
-variable "asg_max_size" {
-  description = "Maximum number of instances in ASG"
-  type        = number
-  default     = 1
+variable "alarm_emails" {
+  description = <<-EOT
+    List of email addresses to receive CloudWatch alarm
+    notifications. AWS will send confirmation emails that
+    must be accepted.
+  EOT
+  type        = list(string)
+
+  validation {
+    condition     = length(var.alarm_emails) > 0
+    error_message = "At least one email address must be provided for alarm notifications."
+  }
+
+  validation {
+    condition = alltrue([
+      for email in var.alarm_emails :
+      can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", email))
+    ])
+    error_message = "All alarm_emails must be valid email addresses."
+  }
 }
 
-variable "asg_min_healthy_percentage" {
-  description = "Specifies the lower limit on the number of instances that must be in the InService state with a healthy status during an instance replacement activity."
-  type        = number
-  default     = 0
+variable "replica_region" {
+  description = <<-EOT
+    AWS region for cross-region backup replication.
+  EOT
+  type        = string
 }
 
-variable "asg_max_healthy_percentage" {
-  description = "Specifies the upper limit on the number of instances that are in the InService or Pending state with a healthy status during an instance replacement activity."
-  type        = number
-  default     = 100
+variable "github_app_key_secret_writers" {
+  description = <<-EOT
+    List of IAM role ARNs that are allowed to write
+    the GitHub App private key (PEM) into the secret
+    created by this module.
+  EOT
+  type        = list(string)
 
+  validation {
+    condition     = length(var.github_app_key_secret_writers) > 0
+    error_message = "At least one writer ARN is required to populate the secret."
+  }
 }
 
 variable "subnets" {
-  description = "Subnet ids where EC2 instances should be present"
+  description = <<-EOT
+    List of subnet IDs for the Fargate task.
+    Must be private subnets with a NAT gateway for
+    outbound internet access (GitHub API, S3, etc.).
+  EOT
   type        = list(string)
+
+  validation {
+    condition     = length(var.subnets) >= 1
+    error_message = <<-EOT
+      At least one subnet is required.
+      Provided: ${length(var.subnets)}
+    EOT
+  }
 }
+
+# ── Optional ─────────────────────────────────────────────────────
 
 variable "environment" {
-  description = "Name of environment"
+  description = "Name of environment."
   type        = string
   default     = "development"
+
+  validation {
+    condition     = can(regex("^[a-z0-9_]+$", var.environment))
+    error_message = <<-EOT
+      environment must contain only lowercase letters,
+      numbers, and underscores (no hyphens).
+      Got: ${var.environment}
+    EOT
+  }
 }
 
-variable "instance_role_name" {
-  description = "If specified, the instance profile role will have this name. Otherwise, the role name will be generated."
+variable "service_name" {
+  description = <<-EOT
+    Descriptive name of the service.
+    Used for naming resources.
+  EOT
   type        = string
-  default     = "infrahouse-github-backup"
+  default     = "github-backup"
 }
 
-variable "instance_type" {
-  description = "EC2 instances type"
+variable "schedule_expression" {
+  description = <<-EOT
+    EventBridge schedule expression for backup frequency.
+    Examples: "rate(1 day)", "cron(0 2 * * ? *)"
+  EOT
   type        = string
-  default     = "t3.micro"
+  default     = "rate(1 day)"
 }
 
-variable "key_pair_name" {
-  description = "SSH keypair name to be deployed in EC2 instances"
+variable "backup_retention_days" {
+  description = <<-EOT
+    Number of days to retain backups in S3 before
+    expiration. Set to 0 to disable expiration.
+  EOT
+  type        = number
+  default     = 365
+
+  validation {
+    condition     = var.backup_retention_days >= 0
+    error_message = <<-EOT
+      backup_retention_days must be >= 0.
+      Got: ${var.backup_retention_days}
+    EOT
+  }
+}
+
+variable "image_uri" {
+  description = <<-EOT
+    Docker image URI for the backup runner.
+    Defaults to the InfraHouse public ECR image.
+  EOT
+  type        = string
+  default     = "public.ecr.aws/infrahouse/github-backup:latest"
+}
+
+variable "s3_bucket_name" {
+  description = <<-EOT
+    Name for the S3 backup bucket.
+    If null, a name is auto-generated.
+  EOT
   type        = string
   default     = null
 }
 
-variable "max_instance_lifetime_days" {
-  description = "The maximum amount of time, in _days_, that an instance can be in service, values must be either equal to 0 or between 7 and 365 days."
-  type        = number
-  default     = 30
-}
-
-variable "packages" {
-  description = "List of packages to install when the instances bootstraps."
-  type        = list(string)
-  default     = []
-}
-
-variable "puppet_custom_facts" {
-  description = "A map of custom puppet facts"
-  type        = any
-  default     = {}
-}
-
-variable "puppet_debug_logging" {
-  description = "Enable debug logging if true."
+variable "force_destroy" {
+  description = <<-EOT
+    Allow destroying S3 buckets even when they contain
+    objects. Set to true only for testing.
+  EOT
   type        = bool
   default     = false
 }
 
-variable "puppet_environmentpath" {
-  description = "A path for directory environments."
-  default     = "{root_directory}/environments"
-}
-
-variable "puppet_hiera_config_path" {
-  description = "Path to hiera configuration file."
-  default     = "{root_directory}/environments/{environment}/hiera.yaml"
-}
-
-variable "puppet_manifest" {
-  description = "Path to puppet manifest. By default ih-puppet will apply {root_directory}/environments/{environment}/manifests/site.pp."
-  type        = string
-  default     = null
-}
-
-variable "puppet_module_path" {
-  description = "Path to common puppet modules."
-  default     = "{root_directory}/environments/{environment}/modules:{root_directory}/modules"
-}
-
-variable "puppet_root_directory" {
-  description = "Path where the puppet code is hosted."
-  default     = "/opt/puppet-code"
-}
-
-variable "root_volume_size" {
-  description = "Root volume size in EC2 instance in Gigabytes"
-  type        = number
-  default     = 30
-}
-variable "service_name" {
-  description = "Descriptive name of a service that will use this VPC"
-  type        = string
-  default     = "infrahouse-github-backup"
-}
-
-variable "smtp_credentials_secret" {
-  description = "AWS secret name with SMTP credentials. The secret must contain a JSON with user and password keys."
-  type        = string
-  default     = null
-}
-
 variable "tags" {
-  description = "Tags to apply to instances in the autoscaling group."
+  description = "Tags to apply to all resources."
   type        = map(string)
-  default = {
-    Name : "infrahouse-github-backup"
-  }
-}
-
-variable "ubuntu_codename" {
-  description = "Ubuntu version codename for the backup runner"
-  default     = "noble"
+  default     = {}
 }
