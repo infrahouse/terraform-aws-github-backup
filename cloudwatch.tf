@@ -1,6 +1,7 @@
 resource "aws_cloudwatch_log_group" "backup" {
   name              = "/ecs/${var.service_name}"
-  retention_in_days = 365
+  retention_in_days = var.log_retention_days
+  kms_key_id        = var.log_group_kms_key_arn
   tags              = local.all_tags
 }
 

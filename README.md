@@ -140,13 +140,18 @@ module "github_backup" {
 | <a name="input_github_app_id"></a> [github\_app\_id](#input\_github\_app\_id) | The GitHub App ID. Found in the App's settings page. | `string` | n/a | yes |
 | <a name="input_github_app_installation_id"></a> [github\_app\_installation\_id](#input\_github\_app\_installation\_id) | The installation ID of the GitHub App on<br/>the target organization. | `string` | n/a | yes |
 | <a name="input_github_app_key_secret_writers"></a> [github\_app\_key\_secret\_writers](#input\_github\_app\_key\_secret\_writers) | List of IAM role ARNs that are allowed to write<br/>the GitHub App private key (PEM) into the secret<br/>created by this module. | `list(string)` | n/a | yes |
-| <a name="input_image_uri"></a> [image\_uri](#input\_image\_uri) | Docker image URI for the backup runner.<br/>Defaults to the InfraHouse public ECR image. | `string` | `"public.ecr.aws/infrahouse/github-backup:latest"` | no |
+| <a name="input_image_uri"></a> [image\_uri](#input\_image\_uri) | Docker image URI for the backup runner.<br/>Defaults to the InfraHouse public ECR image tagged "latest".<br/>For production use, consider pinning to a specific commit SHA tag<br/>(e.g., "public.ecr.aws/infrahouse/github-backup:abc1234")<br/>to avoid unexpected changes. | `string` | `"public.ecr.aws/infrahouse/github-backup:latest"` | no |
+| <a name="input_log_group_kms_key_arn"></a> [log\_group\_kms\_key\_arn](#input\_log\_group\_kms\_key\_arn) | ARN of a KMS key to encrypt the CloudWatch Log Group.<br/>If null, logs are encrypted with the default<br/>AWS-managed key. | `string` | `null` | no |
+| <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Number of days to retain CloudWatch logs. | `number` | `365` | no |
 | <a name="input_replica_region"></a> [replica\_region](#input\_replica\_region) | AWS region for cross-region backup replication. | `string` | n/a | yes |
 | <a name="input_s3_bucket_name"></a> [s3\_bucket\_name](#input\_s3\_bucket\_name) | Name for the S3 backup bucket.<br/>If null, a name is auto-generated. | `string` | `null` | no |
 | <a name="input_schedule_expression"></a> [schedule\_expression](#input\_schedule\_expression) | EventBridge schedule expression for backup frequency.<br/>Examples: "rate(1 day)", "cron(0 2 * * ? *)" | `string` | `"rate(1 day)"` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Descriptive name of the service.<br/>Used for naming resources. | `string` | `"github-backup"` | no |
-| <a name="input_subnets"></a> [subnets](#input\_subnets) | List of subnet IDs for the Fargate task.<br/>Must be private subnets with a NAT gateway for<br/>outbound internet access (GitHub API, S3, etc.). | `list(string)` | n/a | yes |
+| <a name="input_subnets"></a> [subnets](#input\_subnets) | List of subnet IDs for the Fargate task.<br/>The subnets must have outbound internet access<br/>(GitHub API, S3, etc.) — either private subnets<br/>with a NAT gateway or public subnets.<br/>Public IP assignment is detected automatically<br/>from the subnet configuration. | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to all resources. | `map(string)` | `{}` | no |
+| <a name="input_task_cpu"></a> [task\_cpu](#input\_task\_cpu) | CPU units for the Fargate task (1024 = 1 vCPU). | `number` | `1024` | no |
+| <a name="input_task_ephemeral_storage_gb"></a> [task\_ephemeral\_storage\_gb](#input\_task\_ephemeral\_storage\_gb) | Ephemeral storage (GiB) for the Fargate task.<br/>Must be large enough to hold the biggest single<br/>repository mirror and its git bundle simultaneously. | `number` | `50` | no |
+| <a name="input_task_memory"></a> [task\_memory](#input\_task\_memory) | Memory (MiB) for the Fargate task. | `number` | `2048` | no |
 
 ## Outputs
 
@@ -156,6 +161,8 @@ module "github_backup" {
 | <a name="output_ecs_cluster_name"></a> [ecs\_cluster\_name](#output\_ecs\_cluster\_name) | Name of the ECS cluster. |
 | <a name="output_github_app_key_secret_arn"></a> [github\_app\_key\_secret\_arn](#output\_github\_app\_key\_secret\_arn) | ARN of the Secrets Manager secret for the GitHub App private key. |
 | <a name="output_log_group_name"></a> [log\_group\_name](#output\_log\_group\_name) | Name of the CloudWatch log group. |
+| <a name="output_replica_bucket_arn"></a> [replica\_bucket\_arn](#output\_replica\_bucket\_arn) | ARN of the replica S3 bucket (cross-region). |
+| <a name="output_replica_bucket_name"></a> [replica\_bucket\_name](#output\_replica\_bucket\_name) | Name of the replica S3 bucket (cross-region). |
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | ARN of the S3 bucket where backups are stored. |
 | <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | Name of the S3 bucket where backups are stored. |
 | <a name="output_schedule_rule_arn"></a> [schedule\_rule\_arn](#output\_schedule\_rule\_arn) | ARN of the EventBridge schedule rule. |

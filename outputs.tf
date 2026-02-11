@@ -8,6 +8,16 @@ output "s3_bucket_arn" {
   value       = module.backup_bucket.bucket_arn
 }
 
+output "replica_bucket_name" {
+  description = "Name of the replica S3 bucket (cross-region)."
+  value       = aws_s3_bucket.replica.id
+}
+
+output "replica_bucket_arn" {
+  description = "ARN of the replica S3 bucket (cross-region)."
+  value       = aws_s3_bucket.replica.arn
+}
+
 output "github_app_key_secret_arn" {
   description = "ARN of the Secrets Manager secret for the GitHub App private key."
   value       = module.github_app_key.secret_arn

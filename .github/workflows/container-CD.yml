@@ -24,6 +24,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5
@@ -43,8 +46,28 @@ jobs:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
           REGISTRY_ALIAS: "infrahouse"
           REPOSITORY: "github-backup"
-          IMAGE_TAG: "latest"
         working-directory: "container"
         run: |
-          docker build -t $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:$IMAGE_TAG
+          IMAGE="$REGISTRY/$REGISTRY_ALIAS/$REPOSITORY"
+          SHORT_SHA="${GITHUB_SHA::7}"
+
+          TAGS=("latest" "$GITHUB_SHA" "$SHORT_SHA")
+
+          # If a git tag points at this commit, add it as an image tag
+          GIT_TAG="$(git tag --points-at "$GITHUB_SHA" | head -n 1)"
+          if [ -n "$GIT_TAG" ]; then
+            TAGS+=("$GIT_TAG")
+          fi
+
+          BUILD_ARGS=""
+          for TAG in "${TAGS[@]}"; do
+            BUILD_ARGS+=" -t $IMAGE:$TAG"
+          done
+
+          docker build $BUILD_ARGS .
+
+          for TAG in "${TAGS[@]}"; do
+            docker push "$IMAGE:$TAG"
+          done
+
+          echo "Pushed tags: ${TAGS[*]}"
