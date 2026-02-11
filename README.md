@@ -39,7 +39,7 @@ their own AWS account with zero operational dependency on InfraHouse.
 ```hcl
 module "github_backup" {
   source  = "registry.infrahouse.com/infrahouse/github-backup/aws"
-  version = "~> 1.0"
+  version = "1.0.0"
 
   github_app_id              = "123456"
   github_app_installation_id = "78901234"
