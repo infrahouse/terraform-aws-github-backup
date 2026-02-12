@@ -198,9 +198,32 @@ def test_module(
             exit_code,
             stop_reason,
         )
-        assert exit_code == 0, (
-            f"Backup task failed with exit code {exit_code}. " f"Reason: {stop_reason}"
-        )
+        if exit_code != 0:
+            # Fetch CloudWatch logs for debugging
+            log_group = tf_output["log_group_name"]["value"]
+            logs_client = boto3_session.client("logs", region_name=aws_region)
+            streams = logs_client.describe_log_streams(
+                logGroupName=log_group,
+                orderBy="LastEventTime",
+                descending=True,
+                limit=1,
+            )
+            if streams["logStreams"]:
+                events = logs_client.get_log_events(
+                    logGroupName=log_group,
+                    logStreamName=streams["logStreams"][0]["logStreamName"],
+                    startFromHead=False,
+                    limit=200,
+                )
+                LOG.error("=== CloudWatch logs ===")
+                for evt in events["events"]:
+                    LOG.error(evt["message"])
+                LOG.error("=== End logs ===")
+
+            assert False, (
+                f"Backup task failed with exit code {exit_code}. "
+                f"Reason: {stop_reason}"
+            )
 
         # ── Verify backup objects in S3 ─────────────────────────
         s3_client = boto3_session.client("s3", region_name=aws_region)
