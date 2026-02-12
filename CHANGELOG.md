@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-02-12
+
+### Bug Fixes
+
+- Add delete_marker_replication for S3 V2 replication and fix backup logging ([#24](https://github.com/infrahouse/terraform-aws-github-backup/issues/24))
+- Commit CHANGELOG.md before bumpversion in release targets
+
 ## [2.0.0] - 2026-02-11
 
 ### Bug Fixes
@@ -12,6 +19,10 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 - Rewrite module as ECS Fargate scheduled backup (v2)
+
+### Miscellaneous Tasks
+
+- Bump version 1.0.0 → 2.0.0
 
 ### Ci
 
