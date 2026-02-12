@@ -13,6 +13,7 @@ Environment variables (set by ECS task definition):
     AWS_DEFAULT_REGION         - AWS region (auto-set by ECS)
 """
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -27,7 +28,8 @@ import requests
 from infrahouse_core.aws import Secret
 from infrahouse_core.logging import setup_logging
 
-LOG = setup_logging(__name__)
+LOG = logging.getLogger(__name__)
+setup_logging(LOG)
 
 # ── Configuration ───────────────────────────────────────────────
 
