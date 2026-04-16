@@ -57,10 +57,13 @@ resource "aws_s3_bucket_lifecycle_configuration" "replica" {
     id     = "abort-incomplete-multipart-uploads"
     status = "Enabled"
 
+    # filter {} = bucket-wide, intentionally broader than the expiration
+    # rule's `github-backup/` prefix. See the equivalent rule in s3.tf
+    # for the rationale; keep these two rules symmetric.
     filter {}
 
     abort_incomplete_multipart_upload {
-      days_after_initiation = 7
+      days_after_initiation = 1
     }
   }
 }

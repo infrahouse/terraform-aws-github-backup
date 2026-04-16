@@ -41,10 +41,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
     id     = "abort-incomplete-multipart-uploads"
     status = "Enabled"
 
+    # filter {} = bucket-wide, intentionally broader than the expiration
+    # rule's `github-backup/` prefix: stray multipart parts (from direct
+    # puts to the bucket root or dropped uploads at any key) still get
+    # reaped. Do not "fix" this to match the expiration prefix.
     filter {}
 
+    # A bundle upload that hasn't completed in 24 hours is a failed task
+    # run, not an in-flight upload. One day is enough to let the next
+    # scheduled run start fresh without stale parts.
     abort_incomplete_multipart_upload {
-      days_after_initiation = 7
+      days_after_initiation = 1
     }
   }
 }
