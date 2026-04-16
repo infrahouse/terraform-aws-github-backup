@@ -31,6 +31,10 @@ their own AWS account with zero operational dependency on InfraHouse.
 - Least-privilege IAM roles for task execution and task runtime
 - Customer creates and owns their own GitHub App (read-only access)
 
+## Architecture
+
+![Architecture](docs/assets/architecture.svg)
+
 ## Quick Start
 
 1. **Create a GitHub App** in your organization (see [Getting Started](https://infrahouse.github.io/terraform-aws-github-backup/#getting-started))
