@@ -11,7 +11,7 @@ provider "aws" {
 
 module "github_backup" {
   source  = "registry.infrahouse.com/infrahouse/github-backup/aws"
-  version = "2.0.1"
+  version = "2.0.2"
 
   github_app_id              = var.github_app_id
   github_app_installation_id = var.github_app_installation_id
