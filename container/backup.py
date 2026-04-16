@@ -12,6 +12,7 @@ Environment variables (set by ECS task definition):
     S3_BUCKET                  - Target S3 bucket name
     AWS_DEFAULT_REGION         - AWS region (auto-set by ECS)
 """
+
 import json
 import logging
 import os

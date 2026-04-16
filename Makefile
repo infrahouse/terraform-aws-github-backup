@@ -30,8 +30,8 @@ install-hooks:  ## Install repo hooks
 
 .PHONY: bootstrap
 bootstrap: install-hooks  ## Bootstrap the development environment
-	pip install -U "pip ~= 24.0"
-	pip install -U "setuptools ~= 75.0"
+	pip install -U "pip ~= 26.0"
+	pip install -U "setuptools ~= 82.0"
 	pip install -r requirements.txt
 
 .PHONY: test
