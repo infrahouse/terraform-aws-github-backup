@@ -30,10 +30,16 @@ skip-check:
   - CKV_AWS_144
 
   # CKV_AWS_145: S3 KMS encryption on the replica bucket.
-  # SSE-S3 (AES256) is used to avoid cross-region/cross-account KMS key
-  # replication. Backups are git bundles — cryptographically hashed by
-  # git and non-sensitive beyond repo contents already covered by
-  # GitHub's own encryption-at-rest.
+  # The replica uses SSE-S3 (AES256): data is encrypted at rest by AWS
+  # with service-managed keys. KMS on the replica is skipped to avoid
+  # cross-region key replication complexity and per-request KMS charges.
+  #
+  # This IS a real trade-off. Git bundles contain the full source history
+  # of every org repo — for customers with sensitive IP in private repos,
+  # CMK audit trails / BYOK / grant-based access control may be required
+  # by policy. SSE-S3 does not provide those. If you need KMS on the
+  # replica, either manage the replica bucket out-of-band or open an
+  # issue requesting a replica_kms_key_id input (see module roadmap).
   - CKV_AWS_145
 
   # CKV2_AWS_62: S3 event notifications on the replica bucket.
