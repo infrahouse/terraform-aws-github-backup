@@ -2,12 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.2] - 2026-04-16
+
+### Bug Fixes
+
+- Manage Container Insights log group retention
+
+### Documentation
+
+- Add CLAUDE.md with Claude Code guidance
+- Restructure MkDocs site into standard page set with architecture diagram
+- Rewrite CKV_AWS_145 suppression rationale honestly
+- Add warning admonitions about pinning image_uri in production
+
+### Features
+
+- Rewrite module as ECS Fargate scheduled backup (v2)
+
+### Miscellaneous Tasks
+
+- Add checkov config and fix findings it surfaces
+- Fix formatting
+- Address review findings I-1, I-2, I-5, M-5, MF-2
+
+### Refactor
+
+- Tie Container Insights log group to cluster name
+
 ## [2.0.1] - 2026-02-12
 
 ### Bug Fixes
 
 - Add delete_marker_replication for S3 V2 replication and fix backup logging ([#24](https://github.com/infrahouse/terraform-aws-github-backup/issues/24))
 - Commit CHANGELOG.md before bumpversion in release targets
+
+### Documentation
+
+- Update CHANGELOG.md
+
+### Miscellaneous Tasks
+
+- Bump version 2.0.0 → 2.0.1
 
 ## [2.0.0] - 2026-02-11
 
