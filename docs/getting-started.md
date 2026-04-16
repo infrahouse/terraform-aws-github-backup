@@ -86,6 +86,18 @@ terraform init
 terraform apply
 ```
 
+!!! warning "Pin `image_uri` in production"
+    The `image_uri` variable defaults to `public.ecr.aws/infrahouse/github-backup:latest`. A
+    breaking change pushed to `:latest` — or a supply-chain compromise of that tag — would
+    silently affect every deployment on the next task run. For production, pin to a specific
+    commit SHA tag:
+
+    ```hcl
+    image_uri = "public.ecr.aws/infrahouse/github-backup:abc1234"
+    ```
+
+    See [Configuration → `image_uri`](configuration.md#image_uri) for details.
+
 ## Step 3: Store the GitHub App Private Key
 
 The module creates a Secrets Manager secret for the GitHub App PEM. Until you populate it, the ECS
