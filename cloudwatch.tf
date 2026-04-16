@@ -8,8 +8,10 @@ resource "aws_cloudwatch_log_group" "backup" {
 # ECS Container Insights auto-creates this log group with "Never Expire"
 # retention if we don't pre-create it. Managing it here ensures the
 # performance logs honor var.log_retention_days (ISO27001 requirement).
+# Reference the cluster's .name attribute (not var.service_name) so this
+# log group stays tied to the cluster if its naming scheme ever changes.
 resource "aws_cloudwatch_log_group" "container_insights" {
-  name              = "/aws/ecs/containerinsights/${var.service_name}/performance"
+  name              = "/aws/ecs/containerinsights/${aws_ecs_cluster.backup.name}/performance"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.log_group_kms_key_arn
   tags              = local.all_tags
