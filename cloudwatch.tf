@@ -5,6 +5,16 @@ resource "aws_cloudwatch_log_group" "backup" {
   tags              = local.all_tags
 }
 
+# ECS Container Insights auto-creates this log group with "Never Expire"
+# retention if we don't pre-create it. Managing it here ensures the
+# performance logs honor var.log_retention_days (ISO27001 requirement).
+resource "aws_cloudwatch_log_group" "container_insights" {
+  name              = "/aws/ecs/containerinsights/${var.service_name}/performance"
+  retention_in_days = var.log_retention_days
+  kms_key_id        = var.log_group_kms_key_arn
+  tags              = local.all_tags
+}
+
 # Alarm: one or more repositories failed to back up.
 # The backup script publishes BackupFailure as a count of
 # repos that could not be cloned/bundled/uploaded.
