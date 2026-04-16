@@ -104,11 +104,16 @@ backup_retention_days = 0     # keep backups indefinitely
 ### `image_uri`
 
 Docker image URI for the backup runner. Defaults to the InfraHouse public ECR image at `latest`.
-For production, pin to a specific commit SHA tag to avoid surprise image updates.
+
+!!! warning "Pin to a SHA in production"
+    `:latest` is convenient for getting started but exposes you to breaking changes pushed to
+    the tag and to supply-chain compromise of that tag. In production, always pin to a specific
+    commit SHA tag so image changes land through a deliberate Terraform apply, not a surprise
+    pull on the next scheduled task.
 
 ```hcl
-image_uri = "public.ecr.aws/infrahouse/github-backup:latest"  # default
-image_uri = "public.ecr.aws/infrahouse/github-backup:abc1234" # pinned
+image_uri = "public.ecr.aws/infrahouse/github-backup:latest"  # default (getting-started only)
+image_uri = "public.ecr.aws/infrahouse/github-backup:abc1234" # production: pin to SHA
 ```
 
 ### `s3_bucket_name`
