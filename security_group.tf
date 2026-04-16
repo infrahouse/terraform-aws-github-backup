@@ -15,6 +15,7 @@ resource "aws_security_group" "backup" {
 # S3, Secrets Manager, and CloudWatch. Allow all outbound.
 resource "aws_vpc_security_group_egress_rule" "all_outbound" {
   security_group_id = aws_security_group.backup.id
+  description       = "Outbound to GitHub, S3, Secrets Manager, CloudWatch"
   ip_protocol       = "-1"
   cidr_ipv4         = "0.0.0.0/0"
   tags = merge(

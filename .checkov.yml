@@ -1,0 +1,63 @@
+# Checkov configuration for terraform-aws-github-backup
+#
+# Run locally:
+#   checkov -d . --config-file .checkov.yml --output sarif
+
+framework:
+  - terraform
+  - dockerfile
+
+skip-path:
+  - test_data
+  - tests
+
+skip-check:
+  # CKV_TF_1 / CKV_TF_2: Module sources use version pins from the private
+  # InfraHouse registry rather than commit hashes. Renovate manages version
+  # updates via individual PRs (see .claude/CODING_STANDARD.md).
+  - CKV_TF_1
+  - CKV_TF_2
+
+  # CKV_AWS_18: S3 access logging not enabled on the replica bucket.
+  # The replica is a cross-region DR target. Access logs for the primary
+  # bucket are managed upstream by infrahouse/s3-bucket/aws; duplicating
+  # them on the replica adds cost with no investigative value.
+  - CKV_AWS_18
+
+  # CKV_AWS_144: S3 cross-region replication on the replica bucket.
+  # The replica IS the replication destination; replicating it onward
+  # would create an infinite chain.
+  - CKV_AWS_144
+
+  # CKV_AWS_145: S3 KMS encryption on the replica bucket.
+  # SSE-S3 (AES256) is used to avoid cross-region/cross-account KMS key
+  # replication. Backups are git bundles — cryptographically hashed by
+  # git and non-sensitive beyond repo contents already covered by
+  # GitHub's own encryption-at-rest.
+  - CKV_AWS_145
+
+  # CKV2_AWS_62: S3 event notifications on the replica bucket.
+  # No downstream consumers of replica events; alarms fire off the
+  # ECS task, not S3 object creation.
+  - CKV2_AWS_62
+
+  # CKV_AWS_158: CloudWatch log groups KMS-encrypted.
+  # Caller can opt into CMK via var.log_group_kms_key_arn; default is
+  # AWS-managed keys (SSE) which meets ISO27001 requirements for
+  # non-sensitive operational logs.
+  - CKV_AWS_158
+
+  # CKV_AWS_338: CloudWatch log retention >= 1 year.
+  # Default var.log_retention_days is 365. Callers may lower it for
+  # non-prod — that is their compliance decision, not the module's.
+  - CKV_AWS_338
+
+  # CKV_DOCKER_2: HEALTHCHECK instruction in the container.
+  # The backup container is a one-shot ECS task: it runs to completion,
+  # publishes metrics, and exits. A Docker HEALTHCHECK is meaningful only
+  # for long-running services; for a batch job the exit code + CloudWatch
+  # alarms (backup_failure, task_not_running) are the correct signals.
+  - CKV_DOCKER_2
+
+compact: true
+quiet: false

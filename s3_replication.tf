@@ -50,6 +50,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "replica" {
       noncurrent_days = local.backup_lifecycle_rule.days
     }
   }
+
+  # Match primary-bucket behavior: reap orphaned multipart parts from
+  # interrupted replications so they don't accrue storage charges.
+  rule {
+    id     = "abort-incomplete-multipart-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "replica" {
