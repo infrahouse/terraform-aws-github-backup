@@ -42,24 +42,16 @@ def test_module(
 
     terraform_module_dir = osp.join(TERRAFORM_ROOT_DIR, "main")
     with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
-        fp.write(
-            dedent(
-                f"""
+        fp.write(dedent(f"""
                 region                         = "{aws_region}"
                 subnets                        = {json.dumps(subnet_private_ids)}
                 github_app_id                  = "{GH_APP_ID}"
                 github_app_installation_id     = "{GH_APP_INSTALLATION_ID}"
-                """
-            )
-        )
+                """))
         if test_role_arn:
-            fp.write(
-                dedent(
-                    f"""
+            fp.write(dedent(f"""
                     role_arn = "{test_role_arn}"
-                    """
-                )
-            )
+                    """))
 
     with terraform_apply(
         terraform_module_dir,
