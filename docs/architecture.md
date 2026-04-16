@@ -14,9 +14,11 @@ the App can see, then exits.
 3. The container mints a signed **JWT**, exchanges it for a short-lived GitHub **installation
    token**, and refreshes that token as it ages (`TokenManager`).
 4. It lists every repository the App has access to via the GitHub REST API.
-5. For each repo it runs `git clone --mirror` (credentials supplied via `GIT_ASKPASS` so the
-   token never appears in the process table or shell history).
-6. It runs `git bundle create <repo>.bundle --all` to produce a single self-contained file.
+5. For each repo it runs `git clone --mirror` into a temporary directory on the task's ephemeral
+   storage (credentials supplied via `GIT_ASKPASS` so the token never appears in the process
+   table or shell history). The mirror is intermediate — it is discarded after step 6.
+6. It runs `git bundle create <repo>.bundle --all` against the mirror to produce the single
+   self-contained file that actually gets uploaded.
 7. It uploads each bundle to the **S3 primary bucket** under `github-backup/<YYYY-MM-DD>/<org>/`.
 8. It writes a `manifest.json` with repo metadata (name, default branch, SHA, size).
 9. It emits `BackupSuccess` / `BackupFailure` CloudWatch metrics under namespace `GitHubBackup`.

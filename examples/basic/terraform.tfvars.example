@@ -1,0 +1,14 @@
+region      = "us-west-2"
+environment = "production"
+
+github_app_id              = "123456"
+github_app_installation_id = "78901234"
+
+alarm_emails                  = ["devops@example.com"]
+github_app_key_secret_writers = ["arn:aws:iam::123456789012:role/deployer"]
+replica_region                = "us-east-1"
+
+subnets = [
+  "subnet-abc123",
+  "subnet-def456",
+]

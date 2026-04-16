@@ -136,7 +136,9 @@ log_retention_days = 365  # default (matches ISO 27001 log retention)
 
 ### `log_group_kms_key_arn`
 
-KMS key ARN to encrypt CloudWatch log groups. If `null` (default), logs use AWS-managed keys.
+KMS key ARN to encrypt CloudWatch log groups. Applied to both `/ecs/<service_name>` (task stdout)
+and `/aws/ecs/containerinsights/<cluster>/performance` (Container Insights). If `null` (default),
+both log groups use AWS-managed keys.
 
 ```hcl
 log_group_kms_key_arn = aws_kms_key.logs.arn  # default: null
