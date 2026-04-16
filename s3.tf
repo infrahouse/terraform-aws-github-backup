@@ -34,4 +34,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
       noncurrent_days = local.backup_lifecycle_rule.days
     }
   }
+
+  # Clean up stuck multipart uploads so orphaned parts don't accumulate
+  # storage charges if a bundle upload is interrupted mid-flight.
+  rule {
+    id     = "abort-incomplete-multipart-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
 }
