@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.3] - 2026-06-09
+
+### Features
+
+- Manage cross-region replica via s3-bucket module 0.6.0 ([#28](https://github.com/infrahouse/terraform-aws-github-backup/issues/28))
+
 ## [2.0.2] - 2026-04-16
 
 ### Bug Fixes
@@ -14,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Restructure MkDocs site into standard page set with architecture diagram
 - Rewrite CKV_AWS_145 suppression rationale honestly
 - Add warning admonitions about pinning image_uri in production
+- Update CHANGELOG.md
 
 ### Features
 
@@ -24,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Add checkov config and fix findings it surfaces
 - Fix formatting
 - Address review findings I-1, I-2, I-5, M-5, MF-2
+- Bump version 2.0.1 → 2.0.2
 
 ### Refactor
 
