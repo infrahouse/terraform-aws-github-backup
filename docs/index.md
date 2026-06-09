@@ -26,7 +26,7 @@ dependency on InfraHouse.
 ```hcl
 module "github_backup" {
   source  = "registry.infrahouse.com/infrahouse/github-backup/aws"
-  version = "2.0.2"
+  version = "2.0.3"
 
   github_app_id              = "123456"
   github_app_installation_id = "78901234"

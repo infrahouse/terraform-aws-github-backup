@@ -1,5 +1,5 @@
 locals {
-  module_version = "2.0.2"
+  module_version = "2.0.3"
 
   task_cpu                  = var.task_cpu
   task_memory               = var.task_memory
