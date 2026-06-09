@@ -1,10 +1,17 @@
 module "backup_bucket" {
   source  = "registry.infrahouse.com/infrahouse/s3-bucket/aws"
-  version = "0.3.1"
+  version = "0.6.0"
 
   bucket_name       = local.bucket_name
   enable_versioning = true
   force_destroy     = var.force_destroy
+
+  # The module provisions the cross-region replica bucket, its SSL-only
+  # bucket policy, the replication IAM role, and the replication
+  # configuration on the source bucket. It also tags the replica so the
+  # Vanta "aws-s3-cross-region-replication-enabled" check treats it as a
+  # destination (exempt) rather than an unreplicated source.
+  replication_region = var.replica_region
 
   tags = merge(
     {
@@ -15,8 +22,14 @@ module "backup_bucket" {
   )
 }
 
+# One lifecycle config per bucket (source + replica). The replica needs its
+# own copy because S3 does not replicate lifecycle-driven expirations, so
+# without it the DR copy would grow unbounded. See local.lifecycle_buckets.
 resource "aws_s3_bucket_lifecycle_configuration" "backup" {
-  bucket = module.backup_bucket.bucket_name
+  for_each = local.lifecycle_buckets
+
+  region = each.value.region
+  bucket = each.value.bucket
 
   rule {
     id     = local.backup_lifecycle_rule.id
