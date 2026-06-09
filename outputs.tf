@@ -10,12 +10,12 @@ output "s3_bucket_arn" {
 
 output "replica_bucket_name" {
   description = "Name of the replica S3 bucket (cross-region)."
-  value       = aws_s3_bucket.replica.id
+  value       = module.backup_bucket.replica_bucket_name
 }
 
 output "replica_bucket_arn" {
   description = "ARN of the replica S3 bucket (cross-region)."
-  value       = aws_s3_bucket.replica.arn
+  value       = module.backup_bucket.replica_bucket_arn
 }
 
 output "github_app_key_secret_arn" {

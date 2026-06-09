@@ -21,6 +21,22 @@ locals {
     days   = var.backup_retention_days > 0 ? var.backup_retention_days : 1
   }
 
+  # Buckets that share the backup retention lifecycle. The source uses the
+  # provider's default region (region = null); the replica lives in another
+  # region, set per-resource (provider v6, no aliased provider). The replica
+  # needs its own lifecycle because S3 does not replicate lifecycle-driven
+  # expirations from the source.
+  lifecycle_buckets = {
+    source = {
+      bucket = module.backup_bucket.bucket_name
+      region = null
+    }
+    replica = {
+      bucket = module.backup_bucket.replica_bucket_name
+      region = var.replica_region
+    }
+  }
+
   default_module_tags = {
     environment       = var.environment
     service           = var.service_name
