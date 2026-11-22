@@ -76,8 +76,8 @@ ECS created `/aws/ecs/containerinsights/<cluster name>/performance` before the m
 
 ### Plan destroys `aws_s3_bucket_*` resources
 
-Don't apply it. Upgrades from 2.0.1 or 2.0.2 must move the S3 settings, not recreate them; see
-[Upgrading](upgrading.md#from-201-or-202).
+Don't apply it. Upgrades from 2.0.0, 2.0.1 or 2.0.2 must move the S3 settings, not recreate them; see
+[Upgrading](upgrading.md#from-200-201-or-202).
 
 ## Restore Procedures
 

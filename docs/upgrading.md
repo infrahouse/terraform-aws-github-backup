@@ -3,9 +3,12 @@
 This page covers upgrades that need more than a version bump. The examples assume the module block is
 named `github_backup` and the cluster uses the default `service_name`, `github-backup`. Substitute your own.
 
-## From 2.0.1 or 2.0.2
+## From 2.0.0, 2.0.1 or 2.0.2
 
 Upgrade to 2.0.4 or later. Skip 2.0.3 (see [below](#if-you-already-upgraded-to-203)).
+
+2.0.3 and later need Terraform 1.9 or later, because the s3-bucket module does. On an older Terraform,
+`terraform init` fails with `Unsupported Terraform Core version`. Upgrade Terraform first.
 
 Since 2.0.3, the [s3-bucket module](https://registry.terraform.io/modules/infrahouse/s3-bucket/aws/latest)
 manages the replica bucket, its settings and the replication configuration. Before that, this module defined them
@@ -18,7 +21,7 @@ leaves them as they are.
 **S3 settings move and update in place.** The plan reports each of these as moved, with an in-place update or no
 change:
 
-| 2.0.1 / 2.0.2 address | New address |
+| 2.0.0 – 2.0.2 address | New address |
 |---|---|
 | `aws_s3_bucket.replica` | `module.backup_bucket.aws_s3_bucket.replica[0]` |
 | `aws_s3_bucket_versioning.replica` | `module.backup_bucket.aws_s3_bucket_versioning.replica[0]` |
@@ -33,7 +36,8 @@ The in-place updates you should see:
 
 - The replication configuration keeps its role. Its rule ID changes to `replicate-all` and the destination storage
   class from `STANDARD` to `STANDARD_IA`, as set by the s3-bucket module.
-- From 2.0.1, both lifecycle configurations gain the `abort-incomplete-multipart-uploads` rule added in 2.0.2.
+- From 2.0.0 or 2.0.1, both lifecycle configurations gain the `abort-incomplete-multipart-uploads` rule added in
+  2.0.2.
 - Tags change, for example `module_version` on the source and replica buckets.
 
 **The replication role and its policy don't change.** `aws_iam_role.replication` and
@@ -41,8 +45,8 @@ The in-place updates you should see:
 instead of creating its own: a new role would mean deleting the old one, and Terraform would delete it before it
 moved replication off it. Objects written in between would never reach the replica.
 
-**A few resources are created**, among them an SSL-only bucket policy on the replica. On 2.0.1 the plan also creates
-the Container Insights log group; see the next section.
+**An SSL-only bucket policy on the replica is created.** From 2.0.0 or 2.0.1, the plan also imports the Container
+Insights log group, or creates it if ECS hasn't yet; see the next section.
 
 **Nothing is destroyed.**
 
@@ -54,8 +58,8 @@ the Container Insights log group; see the next section.
 
 2.0.2 added `aws_cloudwatch_log_group.container_insights` to set a retention on the Container Insights log group
 `/aws/ecs/containerinsights/<cluster name>/performance`. On a cluster that has been running, ECS has already
-created that group, so the apply fails with `ResourceAlreadyExistsException`. This affects upgrades from 2.0.1, and
-from 2.0.2 if its apply failed with the same error.
+created that group, so the apply fails with `ResourceAlreadyExistsException`. This affects upgrades from 2.0.0 and
+2.0.1, and from 2.0.2 if its apply failed with the same error.
 
 A module can't import the group for you: Terraform allows `import` blocks only in the root module. Add this to your
 root module before you apply:
@@ -95,6 +99,9 @@ because your state already uses the new addresses.
 names change, so the plan replaces both (`+/-`, create before destroy): Terraform creates the new role and policy,
 moves replication to the new role, and only then deletes the old ones. The plan destroys nothing else.
 
+Apply it between backup runs: IAM can take a few seconds to make a new role usable, and an object written in that
+time can fail to replicate.
+
 **Restore any setting the 2.0.3 apply lost.** Look for these changes:
 
 | Plan wants to | Setting lost in the race |
@@ -112,8 +119,8 @@ The encryption configuration doesn't need checking: both resources set `AES256`,
 What a lost setting meant until you apply:
 
 - **No replication, or replica versioning suspended:** new backups didn't reach the replica, and S3 doesn't
-  replicate them retroactively. Each backup run uploads a full set of bundles, so the first run after the apply
-  puts a complete, current backup in the replica. Backups from the runs in between exist only in the source
-  bucket.
+  replicate them later on its own. Each backup run uploads a full set of bundles, so the first run after the
+  apply puts a complete, current backup in the replica. Backups from the runs in between exist only in the
+  source bucket, unless you copy them with S3 Batch Replication.
 - **No public access block on the replica:** the replica relied on account-level public access settings only.
 - **No lifecycle rules:** old backups didn't expire. Once restored, the rules apply to existing objects too.
