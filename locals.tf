@@ -15,10 +15,14 @@ locals {
     : "${var.service_name}-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
   )
 
-  # The replication role's policy can't use the backup_bucket module's ARN
-  # outputs: the module's source bucket depends on replication_role_arn,
-  # which comes from that policy (see s3.tf), so the outputs would form a
-  # cycle. The module names the replica "<bucket_name>-replica".
+  # The replication role's policy builds the bucket ARNs instead of reading
+  # the backup_bucket module's outputs. The source bucket's output would
+  # form a cycle: the module's source bucket depends on
+  # replication_role_arn, which comes from that policy (see s3.tf). The
+  # replica's output would make Terraform force the policy's
+  # create_before_destroy onto the replica bucket. The module names the
+  # replica "<bucket_name>-replica"; a check in s3_replication.tf compares
+  # both ARNs with the module's outputs.
   bucket_arn         = "arn:${local.partition}:s3:::${local.bucket_name}"
   replica_bucket_arn = "${local.bucket_arn}-replica"
 

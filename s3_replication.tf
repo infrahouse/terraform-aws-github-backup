@@ -15,10 +15,10 @@
 #
 # Only standalone objects, such as the replication IAM role and its
 # policy, may be replaced. This module keeps its own role anyway (see
-# below), so an upgrade from 2.0.1 or 2.0.2 replaces nothing.
+# below), so an upgrade from 2.0.0, 2.0.1 or 2.0.2 replaces nothing.
 #
-# The `from` addresses are the 2.0.1 and 2.0.2 addresses (identical in
-# both releases).
+# The `from` addresses are the 2.0.0, 2.0.1 and 2.0.2 addresses
+# (identical in all three releases).
 
 moved {
   from = aws_s3_bucket.replica
@@ -61,12 +61,17 @@ moved {
 # must never point at a deleted role: S3 doesn't retry the objects that
 # fail to replicate.
 #
-# This is the role 2.0.1 and 2.0.2 created, at the same address and with
-# the same name prefix, so upgrading from them leaves it as it is. Had the
-# module created its own role instead, Terraform would delete this one
-# before it moved replication to the new role: for a deleted object it
-# reads create_before_destroy from the state, and the 2.0.1/2.0.2 state
-# doesn't have it (infrahouse/terraform-aws-s3-bucket#34).
+# This is the role 2.0.0 through 2.0.2 created, at the same address and
+# with the same name prefix, so upgrading from them leaves it as it is.
+# Had the module created its own role instead, Terraform would delete this
+# one before it moved replication to the new role: for a deleted object it
+# reads create_before_destroy from the state, and the 2.0.x state doesn't
+# have it (infrahouse/terraform-aws-s3-bucket#34).
+#
+# Terraform records create_before_destroy in the state only when it writes
+# the object, so a role that this release leaves unchanged may still lack
+# it. Before a release removes or renames this role, make sure an earlier
+# release has written it with the flag, or the same problem comes back.
 #
 # 2.0.3 replicated with the module's role. The two moved blocks below take
 # that role and its policy over. Their names differ from these, so
@@ -151,5 +156,23 @@ resource "aws_iam_role_policy" "replication" {
   # moves to the new role.
   lifecycle {
     create_before_destroy = true
+  }
+}
+
+# The replication policy builds the bucket ARNs itself (see locals.tf).
+# Warn if they ever stop matching the buckets the module creates.
+check "replication_policy_bucket_arns" {
+  assert {
+    condition = (
+      local.bucket_arn == module.backup_bucket.bucket_arn
+      && local.replica_bucket_arn == module.backup_bucket.replica_bucket_arn
+    )
+    error_message = <<-EOT
+      The replication role's policy grants access to ${local.bucket_arn} and
+      ${local.replica_bucket_arn}, but the buckets are
+      ${module.backup_bucket.bucket_arn} and
+      ${module.backup_bucket.replica_bucket_arn}. Replication fails until
+      local.bucket_arn and local.replica_bucket_arn match them.
+    EOT
   }
 }
