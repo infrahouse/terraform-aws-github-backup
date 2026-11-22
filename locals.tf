@@ -5,12 +5,22 @@ locals {
   task_memory               = var.task_memory
   task_ephemeral_storage_gb = var.task_ephemeral_storage_gb
 
+  account_id = data.aws_caller_identity.current.account_id
+  partition  = data.aws_partition.current.partition
+
   # Auto-generate bucket name if not provided
   bucket_name = (
     var.s3_bucket_name != null
     ? var.s3_bucket_name
     : "${var.service_name}-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
   )
+
+  # The replication role's policy can't use the backup_bucket module's ARN
+  # outputs: the module's source bucket depends on replication_role_arn,
+  # which comes from that policy (see s3.tf), so the outputs would form a
+  # cycle. The module names the replica "<bucket_name>-replica".
+  bucket_arn         = "arn:${local.partition}:s3:::${local.bucket_name}"
+  replica_bucket_arn = "${local.bucket_arn}-replica"
 
   # Shared lifecycle rule for source and replica buckets.
   # Keeps backup retention consistent across both regions.
