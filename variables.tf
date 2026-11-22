@@ -105,6 +105,13 @@ variable "service_name" {
     condition     = can(regex("^[a-z0-9][a-z0-9-]*[a-z0-9]$", var.service_name))
     error_message = "service_name must be lowercase alphanumeric with hyphens, and not start/end with a hyphen."
   }
+
+  # The longest name_prefix built from it, "<service_name>-s3-repl-" on
+  # the replication role, must fit IAM's 38-character name_prefix limit.
+  validation {
+    condition     = length(var.service_name) <= 29
+    error_message = "service_name must be at most 29 characters, got ${length(var.service_name)}."
+  }
 }
 
 variable "schedule_expression" {
