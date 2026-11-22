@@ -77,4 +77,5 @@ See [Architecture](architecture.md) for details, DR posture, and design rational
 - [Getting Started](getting-started.md) — prerequisites, first deployment, storing the GitHub App key
 - [Configuration](configuration.md) — all variables with examples
 - [Architecture](architecture.md) — component walkthrough, RPO/RTO, design decisions
+- [Upgrading](upgrading.md) — upgrade notes for 2.0.1, 2.0.2 and 2.0.3
 - [Troubleshooting](troubleshooting.md) — failure scenarios and restore procedures

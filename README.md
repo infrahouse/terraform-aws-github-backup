@@ -67,6 +67,7 @@ module "github_backup" {
 - [Configuration](https://infrahouse.github.io/terraform-aws-github-backup/#configuration)
 - [Architecture](https://infrahouse.github.io/terraform-aws-github-backup/#architecture)
 - [Restoring from a Backup](https://infrahouse.github.io/terraform-aws-github-backup/#restoring-from-a-backup)
+- [Upgrading](https://infrahouse.github.io/terraform-aws-github-backup/upgrading/)
 
 <!-- BEGIN_TF_DOCS -->
 
