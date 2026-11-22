@@ -5,9 +5,12 @@ resource "aws_cloudwatch_log_group" "backup" {
   tags              = local.all_tags
 }
 
-# ECS Container Insights auto-creates this log group with "Never Expire"
-# retention if we don't pre-create it. Managing it here ensures the
+# ECS Container Insights auto-creates this log group if we don't
+# pre-create it, with a retention ECS picks rather than ours (a production
+# cluster on 2.0.1 got 1-day retention). Managing it here ensures the
 # performance logs honor var.log_retention_days (ISO27001 requirement).
+# On a cluster deployed before 2.0.2 the group already exists, and the
+# caller must import it in their root module; see docs/upgrading.md.
 # Reference the cluster's .name attribute (not var.service_name) so this
 # log group stays tied to the cluster if its naming scheme ever changes.
 resource "aws_cloudwatch_log_group" "container_insights" {
