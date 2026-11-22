@@ -11,13 +11,29 @@ resource "aws_cloudwatch_log_group" "backup" {
 # performance logs honor var.log_retention_days (ISO27001 requirement).
 # On a cluster deployed before 2.0.2 the group already exists, and the
 # caller must import it in their root module; see docs/upgrading.md.
-# Reference the cluster's .name attribute (not var.service_name) so this
-# log group stays tied to the cluster if its naming scheme ever changes.
+# The name comes from local.cluster_name, which also names the cluster, so
+# the two stay tied together without the group depending on the cluster.
 resource "aws_cloudwatch_log_group" "container_insights" {
-  name              = "/aws/ecs/containerinsights/${aws_ecs_cluster.backup.name}/performance"
+  name              = "/aws/ecs/containerinsights/${local.cluster_name}/performance"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.log_group_kms_key_arn
   tags              = local.all_tags
+}
+
+# Holds the Container Insights log group's deletion until ECS has flushed
+# the last task metrics. ECS writes a task's metrics a minute or two after
+# the task stops, even once the cluster is gone; if the group is gone by
+# then, ECS creates it again, with its own retention, and nothing deletes
+# it. A later deploy with the same service_name then fails with
+# ResourceAlreadyExistsException.
+# It depends on the log group, and the cluster depends on it, so destroy
+# runs cluster -> this wait -> log group. Only destroy_duration is set, so
+# apply never waits. The provider reads the duration from state, so the
+# wait also happens when the module block is removed.
+resource "time_sleep" "container_insights_destroy_delay" {
+  destroy_duration = "${var.container_insights_destroy_delay_seconds}s"
+
+  depends_on = [aws_cloudwatch_log_group.container_insights]
 }
 
 # Alarm: one or more repositories failed to back up.

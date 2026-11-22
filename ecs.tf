@@ -1,5 +1,5 @@
 resource "aws_ecs_cluster" "backup" {
-  name = var.service_name
+  name = local.cluster_name
 
   # Container Insights gives per-task CPU/memory/network metrics in
   # CloudWatch, which is essential for spotting tasks that are close
@@ -10,6 +10,10 @@ resource "aws_ecs_cluster" "backup" {
   }
 
   tags = local.all_tags
+
+  # Destroy order: this cluster, then the wait, then the Container
+  # Insights log group (see cloudwatch.tf).
+  depends_on = [time_sleep.container_insights_destroy_delay]
 }
 
 resource "aws_ecs_task_definition" "backup" {

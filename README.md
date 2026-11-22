@@ -77,12 +77,14 @@ module "github_backup" {
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.9 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
+| <a name="requirement_time"></a> [time](#requirement\_time) | ~> 0.9 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
+| <a name="provider_time"></a> [time](#provider\_time) | ~> 0.9 |
 
 ## Modules
 
@@ -116,6 +118,7 @@ module "github_backup" {
 | [aws_sns_topic.alarms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
 | [aws_sns_topic_subscription.alarm_emails](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_vpc_security_group_egress_rule.all_outbound](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [time_sleep.container_insights_destroy_delay](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_default_tags.provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/default_tags) | data source |
 | [aws_iam_policy.ecs_task_execution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy) | data source |
@@ -136,6 +139,7 @@ module "github_backup" {
 |------|-------------|------|---------|:--------:|
 | <a name="input_alarm_emails"></a> [alarm\_emails](#input\_alarm\_emails) | List of email addresses to receive CloudWatch alarm<br/>notifications. AWS will send confirmation emails that<br/>must be accepted. | `list(string)` | n/a | yes |
 | <a name="input_backup_retention_days"></a> [backup\_retention\_days](#input\_backup\_retention\_days) | Number of days to retain backups in S3 before<br/>expiration. Set to 0 to disable expiration. | `number` | `365` | no |
+| <a name="input_container_insights_destroy_delay_seconds"></a> [container\_insights\_destroy\_delay\_seconds](#input\_container\_insights\_destroy\_delay\_seconds) | Seconds that terraform destroy waits between deleting the ECS cluster<br/>and deleting its Container Insights log group. ECS writes a task's last<br/>metrics a minute or two after the task stops; if the group is already<br/>gone, ECS creates it again and it outlives the destroy. Apply never<br/>waits. 0 turns the wait off. | `number` | `180` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Name of environment. | `string` | `"development"` | no |
 | <a name="input_force_destroy"></a> [force\_destroy](#input\_force\_destroy) | Allow destroying S3 buckets even when they contain<br/>objects. Set to true only for testing. | `bool` | `false` | no |
 | <a name="input_github_app_id"></a> [github\_app\_id](#input\_github\_app\_id) | The GitHub App ID. Found in the App's settings page. | `string` | n/a | yes |
