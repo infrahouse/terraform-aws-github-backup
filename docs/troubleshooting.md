@@ -79,6 +79,27 @@ ECS created `/aws/ecs/containerinsights/<cluster name>/performance` before the m
 Don't apply it. Upgrades from 2.0.0, 2.0.1 or 2.0.2 must move the S3 settings, not recreate them; see
 [Upgrading](upgrading.md#from-200-201-or-202).
 
+## Deploy Issues
+
+### Apply fails with `ResourceAlreadyExistsException` after a destroy
+
+**Symptom:** `terraform apply` with a `service_name` you deployed and destroyed before fails to create
+`/aws/ecs/containerinsights/<cluster name>/performance`. If the cluster still exists and you are upgrading it, see
+[the upgrade case](#apply-fails-with-resourcealreadyexistsexception-on-the-container-insights-log-group) instead.
+
+**Cause:** Releases without `container_insights_destroy_delay_seconds` deleted the Container Insights log group
+before ECS had written the last task's metrics, and ECS created the group again. Releases with it wait that long
+between deleting the cluster and deleting the group.
+
+**Fix:** The group holds only the metrics ECS wrote after the destroy. Delete it and apply again:
+
+```bash
+aws logs delete-log-group \
+  --log-group-name "/aws/ecs/containerinsights/github-backup/performance"
+```
+
+Substitute your cluster name, which equals `service_name`.
+
 ## Restore Procedures
 
 Git bundles are portable and self-contained. Each bundle is a full mirror at the time of backup —
