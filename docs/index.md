@@ -69,7 +69,7 @@ See [Architecture](architecture.md) for details, DR posture, and design rational
 
 | Name | Version |
 |------|---------|
-| terraform | ~> 1.5 |
+| terraform | ~> 1.9 |
 | aws | ~> 6.0 |
 
 ## Next Steps
