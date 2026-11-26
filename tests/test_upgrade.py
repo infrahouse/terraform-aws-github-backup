@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from os import path as osp
 from subprocess import PIPE, STDOUT, CalledProcessError, run
 from textwrap import dedent
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Callable, Dict, FrozenSet, List, Optional, Set, Tuple
 
 import pytest
 from boto3 import Session
@@ -155,6 +155,7 @@ def test_upgrade(
     test_role_arn: Optional[str],
     aws_region: str,
     boto3_session: Session,
+    cleanup_ecs_task_definitions: Callable[[str], None],
 ) -> None:
     """
     Upgrade a released version to this checkout without losing any S3
@@ -192,6 +193,11 @@ def test_upgrade(
     # after the cluster is gone, so a previous run can leave it behind.
     # 2.0.2 and later create it, and a leftover would fail the first apply.
     _delete_log_group(logs, log_group)
+    # Each apply registers a task definition revision in the family
+    # service_name, and a destroy only deregisters it. pytest-infrahouse
+    # deletes the family's revisions at the end of the session, also when
+    # the test fails after the first apply.
+    cleanup_ecs_task_definitions(scenario.service_name)
 
     try:
         with terraform_apply(
