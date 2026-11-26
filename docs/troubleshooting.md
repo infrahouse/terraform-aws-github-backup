@@ -66,6 +66,19 @@ aws ecs list-tasks --cluster "$CLUSTER" --desired-status STOPPED --max-results 1
 - Subnets lost internet access (NAT gateway removed, route table changed)
 - The image tag moved and introduced a regression (pin to a SHA in `image_uri`)
 
+## Upgrade Issues
+
+### Apply fails with `ResourceAlreadyExistsException` on the Container Insights log group
+
+ECS created `/aws/ecs/containerinsights/<cluster name>/performance` before the module started managing it in
+2.0.2. Import it from your root module; see
+[Upgrading → Container Insights log group](upgrading.md#container-insights-log-group).
+
+### Plan destroys `aws_s3_bucket_*` resources
+
+Don't apply it. Upgrades from 2.0.0, 2.0.1 or 2.0.2 must move the S3 settings, not recreate them; see
+[Upgrading](upgrading.md#from-200-201-or-202).
+
 ## Restore Procedures
 
 Git bundles are portable and self-contained. Each bundle is a full mirror at the time of backup —

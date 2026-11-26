@@ -1,4 +1,4 @@
-pytest-infrahouse ~= 0.24
+pytest-infrahouse ~= 0.26
 infrahouse-core ~= 1.1
 
 # Documentation dependencies

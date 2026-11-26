@@ -1,17 +1,26 @@
 module "backup_bucket" {
   source  = "registry.infrahouse.com/infrahouse/s3-bucket/aws"
-  version = "0.6.0"
+  version = "0.10.0"
 
   bucket_name       = local.bucket_name
   enable_versioning = true
   force_destroy     = var.force_destroy
 
   # The module provisions the cross-region replica bucket, its SSL-only
-  # bucket policy, the replication IAM role, and the replication
-  # configuration on the source bucket. It also tags the replica so the
-  # Vanta "aws-s3-cross-region-replication-enabled" check treats it as a
+  # bucket policy, and the replication configuration on the source bucket.
+  # It also tags the replica so the Vanta
+  # "aws-s3-cross-region-replication-enabled" check treats it as a
   # destination (exempt) rather than an unreplicated source.
   replication_region = var.replica_region
+
+  # Replicate with this module's role (s3_replication.tf explains why).
+  # The module decides at plan time whether to create its own role, so it
+  # must know then that this isn't null. aws_iam_role.replication.arn is
+  # unknown until a new role exists; a string template is known to be
+  # non-null. The name comes from the policy rather than the role, so the
+  # replication configuration also waits for the policy: otherwise S3 could
+  # replicate with a role that has no permissions yet.
+  replication_role_arn = "arn:${local.partition}:iam::${local.account_id}:role/${aws_iam_role_policy.replication.role}"
 
   tags = merge(
     {

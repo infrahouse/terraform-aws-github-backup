@@ -57,10 +57,14 @@ and pushes tags.
 ## Architecture
 
 **Terraform resources** (root `.tf` files): ECS cluster + task definition (`ecs.tf`), EventBridge schedule
-(`eventbridge.tf`), S3 primary bucket + cross-region replica (`s3.tf`, `s3_replication.tf`), IAM roles for
-execution/task/eventbridge/replication (`iam.tf`), CloudWatch logs + alarms (`cloudwatch.tf`), Secrets
-Manager for GitHub App key (`secret.tf`), security group (`security_group.tf`), SNS for alarm
-notifications (`sns.tf`).
+(`eventbridge.tf`), S3 primary bucket + cross-region replica (`s3.tf`), replication IAM role and the
+`moved` blocks for upgrades (`s3_replication.tf`), IAM roles for execution/task/eventbridge (`iam.tf`),
+CloudWatch logs + alarms (`cloudwatch.tf`), Secrets Manager for GitHub App key (`secret.tf`), security group
+(`security_group.tf`), SNS for alarm notifications (`sns.tf`).
+
+**Replication role**: the `backup_bucket` module replicates with this module's own role
+(`replication_role_arn`), not one it creates. Upgrades from 2.0.1/2.0.2 keep that role, so replication never
+points at a deleted one; don't switch to the s3-bucket module's role.
 
 **Cross-region replication** uses AWS provider v6 and deliberately avoids aliased providers — the replica
 bucket is managed via provider-v6 `region` arguments on each resource. Do not reintroduce

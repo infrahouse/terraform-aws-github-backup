@@ -48,8 +48,8 @@ how long history is retained.
 | **ECS Task Definition** (`aws_ecs_task_definition.backup`) | Runs `container/backup.py` on Fargate. |
 | **EventBridge Rule** (`aws_cloudwatch_event_rule.backup`) | Scheduler that triggers the task. |
 | **S3 Primary Bucket** (via `infrahouse/s3-bucket/aws`) | Stores bundles + manifest. Versioned. |
-| **S3 Replica Bucket** (`aws_s3_bucket.replica`) | CRR target in `replica_region`. |
-| **Replication IAM role** | Assumed by S3 service for cross-region replication. |
+| **S3 Replica Bucket** (via `infrahouse/s3-bucket/aws`) | CRR target in `replica_region`. |
+| **Replication IAM role** (`aws_iam_role.replication`) | Assumed by S3 service for cross-region replication. |
 | **Secrets Manager Secret** (via `infrahouse/secret/aws`) | Holds the GitHub App PEM. |
 | **Task IAM role** | Read secret, write S3, publish CloudWatch metrics. |
 | **Execution IAM role** | Pull image from ECR, write logs. |

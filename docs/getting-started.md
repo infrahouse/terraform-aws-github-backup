@@ -6,7 +6,7 @@ This guide walks you through deploying `terraform-aws-github-backup` for the fir
 
 Before you begin, ensure you have:
 
-1. **Terraform >= 1.5** installed
+1. **Terraform >= 1.9** installed
 2. **AWS provider ~> 6.0** — the module uses provider v6 per-resource `region` arguments for the
    cross-region replica bucket
 3. **AWS credentials** configured with permissions for:
@@ -41,7 +41,7 @@ Create a Terraform configuration:
 
 ```hcl
 terraform {
-  required_version = "~> 1.5"
+  required_version = "~> 1.9"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
