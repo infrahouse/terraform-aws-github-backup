@@ -1,5 +1,11 @@
 .DEFAULT_GOAL := help
 
+# Recipes like `pytest ... | tee <log>` exit with the last command's
+# status, so without pipefail a failing test suite looks green in CI.
+# The flag goes in SHELL, not .SHELLFLAGS: macOS ships GNU make 3.81, which
+# ignores .SHELLFLAGS.
+SHELL := /bin/bash -o pipefail
+
 TEST_REGION ?= us-west-2
 TEST_ROLE ?= arn:aws:iam::303467602807:role/github-backup-tester
 TEST_SELECTOR ?= tests/
