@@ -2,11 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-11-27
+
+### Bug Fixes
+
+- Move replica S3 settings on upgrade instead of recreating them
+- Keep the replication role when upgrading from 2.0.1 or 2.0.2
+- Require Terraform 1.9, as the s3-bucket module does since 2.0.3
+- Limit service_name to 29 characters
+- Warn if the replication policy's bucket ARNs don't match the buckets
+- Fail make test when pytest fails
+- Wait for ECS before deleting the Container Insights log group on destroy
+
+### Documentation
+
+- Correct the Container Insights log group retention comment
+- Add an upgrade guide for 2.0.1, 2.0.2 and 2.0.3
+- Cover 2.0.0, Terraform 1.9 and apply timing in the upgrade guide
+- Describe container_insights_destroy_delay_seconds and the leftover log group
+- List the destroy-delay wait in the upgrade guide's expected plan
+
+### Testing
+
+- Upgrade from 2.0.1 and 2.0.3 without losing S3 settings or the replication role
+- Check the log group import and that replication works after upgrade
+- Delete the upgrade test's task definitions
+- Check that destroy leaves no Container Insights log group
+
 ## [2.0.3] - 2026-06-09
+
+### Documentation
+
+- Update CHANGELOG.md
 
 ### Features
 
 - Manage cross-region replica via s3-bucket module 0.6.0 ([#28](https://github.com/infrahouse/terraform-aws-github-backup/issues/28))
+
+### Miscellaneous Tasks
+
+- Bump version 2.0.2 → 2.0.3
 
 ## [2.0.2] - 2026-04-16
 
