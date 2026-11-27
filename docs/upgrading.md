@@ -45,8 +45,11 @@ The in-place updates you should see:
 instead of creating its own: a new role would mean deleting the old one, and Terraform would delete it before it
 moved replication off it. Objects written in between would never reach the replica.
 
-**An SSL-only bucket policy on the replica is created.** From 2.0.0 or 2.0.1, the plan also imports the Container
-Insights log group, or creates it if ECS hasn't yet; see the next section.
+**Two resources are created:** an SSL-only bucket policy on the replica, and
+`time_sleep.container_insights_destroy_delay`, which waits only during `terraform destroy` (see
+[`container_insights_destroy_delay_seconds`](configuration.md#container_insights_destroy_delay_seconds)). From
+2.0.0 or 2.0.1, the plan also imports the Container Insights log group, or creates it if ECS hasn't yet; see the
+next section.
 
 **Nothing is destroyed.**
 
@@ -97,7 +100,8 @@ because your state already uses the new addresses.
 **The replication role and its policy are replaced.** 2.0.3 replicated with a role the s3-bucket module created.
 2.0.4 moves that role and its policy to `aws_iam_role.replication` and `aws_iam_role_policy.replication`. Their
 names change, so the plan replaces both (`+/-`, create before destroy): Terraform creates the new role and policy,
-moves replication to the new role, and only then deletes the old ones. The plan destroys nothing else.
+moves replication to the new role, and only then deletes the old ones. The plan destroys nothing else. It also
+creates `time_sleep.container_insights_destroy_delay`, which waits only during `terraform destroy`.
 
 Apply it between backup runs: IAM can take a few seconds to make a new role usable, and an object written in that
 time can fail to replicate.
