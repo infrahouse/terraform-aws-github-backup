@@ -184,6 +184,31 @@ variable "log_group_kms_key_arn" {
   default     = null
 }
 
+variable "container_insights_destroy_delay_seconds" {
+  description = <<-EOT
+    Seconds that terraform destroy waits between deleting the ECS cluster
+    and deleting its Container Insights log group. ECS writes a task's last
+    metrics a minute or two after the task stops; if the group is already
+    gone, ECS creates it again and it outlives the destroy. Apply never
+    waits. 0 turns the wait off.
+  EOT
+  type        = number
+  default     = 180
+
+  validation {
+    # A null fails both comparisons with an unhelpful error, so it is rejected by the conditional instead.
+    condition = (
+      var.container_insights_destroy_delay_seconds == null
+      ? false
+      : (
+        var.container_insights_destroy_delay_seconds >= 0
+        && floor(var.container_insights_destroy_delay_seconds) == var.container_insights_destroy_delay_seconds
+      )
+    )
+    error_message = "container_insights_destroy_delay_seconds must be a whole number of seconds, 0 or more."
+  }
+}
+
 variable "task_cpu" {
   description = <<-EOT
     CPU units for the Fargate task (1024 = 1 vCPU).

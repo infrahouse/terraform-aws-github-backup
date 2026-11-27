@@ -51,6 +51,12 @@ locals {
     }
   }
 
+  # The ECS cluster and its Container Insights log group both take their
+  # names from here, so the group's name doesn't depend on the cluster
+  # resource: the cluster has to depend on the group instead (see
+  # time_sleep.container_insights_destroy_delay in cloudwatch.tf).
+  cluster_name = var.service_name
+
   default_module_tags = {
     environment       = var.environment
     service           = var.service_name

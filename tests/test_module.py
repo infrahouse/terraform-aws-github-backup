@@ -20,6 +20,14 @@ from tests.conftest import (
     TERRAFORM_ROOT_DIR,
 )
 
+# The module's default service_name, which also names the ECS cluster.
+SERVICE_NAME = "github-backup"
+CONTAINER_INSIGHTS_LOG_GROUP = f"/aws/ecs/containerinsights/{SERVICE_NAME}/performance"
+# How long to watch for ECS recreating that group after terraform destroy.
+# Without the module's destroy delay, ECS recreated it 1-2 minutes after
+# the cluster was deleted.
+LOG_GROUP_WATCH_SECONDS = 240
+
 
 def test_module(
     service_network,
@@ -37,6 +45,8 @@ def test_module(
     3. Run the ECS Fargate task.
     4. Wait for task completion.
     5. Verify backup bundles exist in the S3 bucket.
+    6. After terraform destroy, verify ECS doesn't recreate the Container
+       Insights log group.
     """
     subnet_private_ids = service_network["subnet_private_ids"]["value"]
 
@@ -52,6 +62,12 @@ def test_module(
             fp.write(dedent(f"""
                     role_arn = "{test_role_arn}"
                     """))
+
+    logs_client = boto3_session.client("logs", region_name=aws_region)
+    # A destroy by a release without the module's destroy delay can leave
+    # the Container Insights group behind, and the apply would then fail
+    # with ResourceAlreadyExistsException.
+    _delete_log_group(logs_client, CONTAINER_INSIGHTS_LOG_GROUP)
 
     with terraform_apply(
         terraform_module_dir,
@@ -76,6 +92,7 @@ def test_module(
         assert cluster_arn.startswith("arn:aws:ecs:")
 
         cluster_name = tf_output["ecs_cluster_name"]["value"]
+        assert cluster_name == SERVICE_NAME
         task_definition_arn = tf_output["task_definition_arn"]["value"]
         security_group_id = tf_output["security_group_id"]["value"]
         module_secret_arn = tf_output["github_app_key_secret_arn"]["value"]
@@ -262,3 +279,56 @@ def test_module(
         assert (
             manifest["success_count"] > 0
         ), "Expected at least one successful backup in manifest"
+
+    if not keep_after:
+        _assert_log_group_stays_deleted(
+            logs_client, CONTAINER_INSIGHTS_LOG_GROUP, LOG_GROUP_WATCH_SECONDS
+        )
+
+
+def _delete_log_group(logs_client, log_group: str) -> None:
+    """
+    Delete a log group if it exists.
+
+    :param logs_client: CloudWatch Logs client in the log group's region.
+    :param log_group: Log group name.
+    """
+    try:
+        logs_client.delete_log_group(logGroupName=log_group)
+        LOG.info("Deleted %s, left behind by an earlier destroy", log_group)
+    except logs_client.exceptions.ResourceNotFoundException:
+        pass
+
+
+def _assert_log_group_stays_deleted(
+    logs_client, log_group: str, watch_seconds: int
+) -> None:
+    """
+    Fail if a log group exists now or appears within ``watch_seconds``.
+
+    The backup task ran during the test, so ECS writes its last Container
+    Insights metrics after the destroy. The module's destroy delay keeps
+    the group until then; without it, ECS recreates the group.
+
+    :param logs_client: CloudWatch Logs client in the log group's region.
+    :param log_group: Log group name.
+    :param watch_seconds: How long to watch, in seconds.
+    """
+    deadline = time.monotonic() + watch_seconds
+    while True:
+        groups = logs_client.describe_log_groups(logGroupNamePrefix=log_group)[
+            "logGroups"
+        ]
+        if any(group["logGroupName"] == log_group for group in groups):
+            # Delete it so the next run's apply doesn't fail too. ECS may
+            # still write once more; the next run deletes that copy first.
+            _delete_log_group(logs_client, log_group)
+            raise AssertionError(
+                f"{log_group} exists after terraform destroy: ECS recreated it"
+            )
+        if time.monotonic() >= deadline:
+            LOG.info(
+                "%s stayed deleted for %ds after destroy", log_group, watch_seconds
+            )
+            return
+        time.sleep(15)

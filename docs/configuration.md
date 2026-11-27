@@ -144,6 +144,19 @@ both log groups use AWS-managed keys.
 log_group_kms_key_arn = aws_kms_key.logs.arn  # default: null
 ```
 
+### `container_insights_destroy_delay_seconds`
+
+Seconds that `terraform destroy` waits between deleting the ECS cluster and deleting the Container Insights log
+group. ECS writes a task's last Container Insights metrics a minute or two after the task stops, even once the
+cluster is gone. If the group is already deleted, ECS creates it again, with 1-day retention, and the group outlives
+the destroy. A later deploy with the same `service_name` then fails with `ResourceAlreadyExistsException`.
+
+`terraform apply` never waits. `0` turns the wait off.
+
+```hcl
+container_insights_destroy_delay_seconds = 180  # default
+```
+
 ### `task_cpu`
 
 Fargate task CPU (1024 = 1 vCPU). Must be a Fargate-supported combination with `task_memory`.
